@@ -3,9 +3,205 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NYC Budget Explorer</title>
+<title>NYC Budget Explorer — 1900 to Present</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h1>NYC Budget Explorer — Coming Soon</h1>
+<div id="app">
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-title">
+        <h1>New York City Budget Explorer</h1>
+        <p class="subtitle">Revenue &amp; Expenditure, 1900–2025</p>
+      </div>
+      <div class="header-controls">
+        <label class="toggle-label">
+          <input type="checkbox" id="inflation-toggle">
+          <span class="toggle-switch"></span>
+          <span class="toggle-text">Adjust for inflation (2024 $)</span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation tabs -->
+  <nav class="view-tabs">
+    <button class="tab active" data-view="overview">Overview</button>
+    <button class="tab" data-view="expenditures">Expenditures</button>
+    <button class="tab" data-view="revenue">Revenue</button>
+    <button class="tab" data-view="compare">Compare Years</button>
+    <button class="tab" data-view="timeline">Timeline</button>
+    <button class="tab" data-view="table">Data Table</button>
+  </nav>
+
+  <!-- Mayor timeline bar -->
+  <div class="mayor-bar" id="mayor-bar"></div>
+
+  <!-- View: Overview -->
+  <section class="view active" id="view-overview">
+    <div class="view-header">
+      <h2>Total Revenue vs. Expenditure</h2>
+      <div class="chart-type-toggle">
+        <button class="chart-btn active" data-chart="area">Area</button>
+        <button class="chart-btn" data-chart="line">Line</button>
+        <button class="chart-btn" data-chart="bar">Bar</button>
+      </div>
+    </div>
+    <div class="chart-container large">
+      <canvas id="overview-chart"></canvas>
+    </div>
+    <div class="chart-annotations" id="overview-annotations"></div>
+  </section>
+
+  <!-- View: Expenditures -->
+  <section class="view" id="view-expenditures">
+    <div class="view-header">
+      <h2>Expenditure Breakdown</h2>
+      <div class="chart-type-toggle">
+        <button class="chart-btn active" data-chart="stacked-area">Stacked Area</button>
+        <button class="chart-btn" data-chart="stacked-bar">Stacked Bar</button>
+        <button class="chart-btn" data-chart="line-multi">Lines</button>
+        <button class="chart-btn" data-chart="pct">% of Total</button>
+      </div>
+    </div>
+    <div class="legend-bar" id="expenditure-legend"></div>
+    <div class="chart-container large">
+      <canvas id="expenditure-chart"></canvas>
+    </div>
+  </section>
+
+  <!-- View: Revenue -->
+  <section class="view" id="view-revenue">
+    <div class="view-header">
+      <h2>Revenue Breakdown</h2>
+      <div class="chart-type-toggle">
+        <button class="chart-btn active" data-chart="stacked-area">Stacked Area</button>
+        <button class="chart-btn" data-chart="stacked-bar">Stacked Bar</button>
+        <button class="chart-btn" data-chart="line-multi">Lines</button>
+        <button class="chart-btn" data-chart="pct">% of Total</button>
+      </div>
+    </div>
+    <div class="legend-bar" id="revenue-legend"></div>
+    <div class="chart-container large">
+      <canvas id="revenue-chart"></canvas>
+    </div>
+  </section>
+
+  <!-- View: Compare -->
+  <section class="view" id="view-compare">
+    <div class="view-header">
+      <h2>Compare Two Years</h2>
+      <div class="compare-controls">
+        <div class="year-picker">
+          <label>Year A</label>
+          <select id="compare-year-a"></select>
+        </div>
+        <span class="vs-label">vs.</span>
+        <div class="year-picker">
+          <label>Year B</label>
+          <select id="compare-year-b"></select>
+        </div>
+        <div class="compare-mode-toggle">
+          <button class="chart-btn active" data-chart="side-by-side">Side by Side</button>
+          <button class="chart-btn" data-chart="overlay">Overlay</button>
+          <button class="chart-btn" data-chart="delta">Change</button>
+        </div>
+      </div>
+    </div>
+    <div class="compare-grid">
+      <div class="compare-panel">
+        <h3 id="compare-title-exp">Expenditures</h3>
+        <div class="chart-container medium">
+          <canvas id="compare-exp-chart"></canvas>
+        </div>
+      </div>
+      <div class="compare-panel">
+        <h3 id="compare-title-rev">Revenue</h3>
+        <div class="chart-container medium">
+          <canvas id="compare-rev-chart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="compare-summary" id="compare-summary"></div>
+  </section>
+
+  <!-- View: Timeline (scrollable) -->
+  <section class="view" id="view-timeline">
+    <div class="view-header">
+      <h2>Scroll Through the Years</h2>
+    </div>
+    <div class="timeline-wrapper">
+      <div class="timeline-slider-row">
+        <button class="timeline-btn" id="timeline-prev">&larr;</button>
+        <input type="range" id="timeline-slider" min="1900" max="2025" value="1975" step="1">
+        <button class="timeline-btn" id="timeline-next">&rarr;</button>
+      </div>
+      <div class="timeline-year-display" id="timeline-year">1975</div>
+      <div class="timeline-mayor" id="timeline-mayor"></div>
+    </div>
+    <div class="timeline-content">
+      <div class="timeline-left">
+        <div class="chart-container medium">
+          <canvas id="timeline-exp-chart"></canvas>
+        </div>
+      </div>
+      <div class="timeline-right">
+        <div class="chart-container medium">
+          <canvas id="timeline-rev-chart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="timeline-totals" id="timeline-totals"></div>
+    <div class="timeline-context" id="timeline-context"></div>
+  </section>
+
+  <!-- View: Table -->
+  <section class="view" id="view-table">
+    <div class="view-header">
+      <h2>Data Table</h2>
+      <div class="table-controls">
+        <select id="table-category">
+          <option value="all">All Categories</option>
+          <option value="expenditures">Expenditures Only</option>
+          <option value="revenue">Revenue Only</option>
+          <option value="totals">Totals Only</option>
+        </select>
+        <div class="year-range-picker">
+          <label>From</label>
+          <select id="table-year-from"></select>
+          <label>To</label>
+          <select id="table-year-to"></select>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table id="data-table">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="sources">
+      <h4>Sources</h4>
+      <p>NYC Office of Management and Budget; NYC Comptroller's Annual Reports;
+         U.S. Census Bureau, Census of Governments; Citizens Budget Commission;
+         NYC Independent Budget Office; Charles R. Morris, <em>The Cost of Good Intentions</em> (1980);
+         BLS CPI-U for inflation adjustments.</p>
+      <p class="note">Early 20th century figures are estimates compiled from multiple historical sources.
+         Category breakdowns become more granular from the 1950s onward. All figures in millions of dollars.</p>
+    </div>
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
