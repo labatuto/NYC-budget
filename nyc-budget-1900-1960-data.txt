@@ -1,0 +1,339 @@
+NEW YORK CITY BUDGET HISTORICAL DATA: 1900-1960
+=================================================
+Compiled from web research. All figures in nominal (current) dollars.
+NYC Fiscal Year runs July 1 - June 30.
+
+
+========================================================================
+ERA 1: POST-CONSOLIDATION (1898-1914)
+========================================================================
+
+CIRCA 1899-1900:
+- Total expenditures (1899): ~$68.5 million
+  (Per capita: $19.56 x estimated population 3,500,000)
+- Gross funded debt (Jan 1, 1900): $358,104,307.11
+- Sinking fund: $105,435,871.70
+- Net funded debt: $252,668,435.41
+- Consolidation added ~$15 million/year in government costs over
+  pre-consolidation combined expenditures
+- Population (1900): ~3,437,000
+SOURCE: Popular Science Monthly, Vol. 57, May 1900,
+  "The Most Expensive City in the World"
+  https://en.wikisource.org/wiki/Popular_Science_Monthly/Volume_57/May_1900/The_Most_Expensive_City_in_the_World
+
+1910:
+- Total budget (appropriations): $163,130,270.37
+SOURCE: 1922 Encyclopaedia Britannica, "New York (City)" entry
+  https://en.wikisource.org/wiki/1922_Encyclop%C3%A6dia_Britannica/New_York_(City)
+
+1910-1914 DETAILED DATA:
+- Revenue and expenditure statements for 1910-1914 were compiled by
+  NYC Department of Finance for the 1915 Constitutional Convention
+- Document: "The City of New York: Summary and Detailed Statements of
+  Revenues and Expenditures for the Years 1910 to 1914, Inclusive"
+SOURCE: Internet Archive
+  https://archive.org/details/cityofnewyorksum00newyuoft
+
+PROPERTY & DEBT (1920, reflecting pre-war growth):
+- Assessed taxable property (real + personal, 1920): $8,922,628,742
+  - Real estate portion: $8,626,122,557
+- Net funded debt (1920): $1,033,878,359
+- Gross bonded debt: $1,238,260,597
+- Floating debt: $42,350,400
+- Sinking fund: $204,382,238
+SOURCE: 1922 Encyclopaedia Britannica
+  https://en.wikisource.org/wiki/1922_Encyclop%C3%A6dia_Britannica/New_York_(City)
+
+
+========================================================================
+ERA 2: WWI AND 1920S BOOM (1916-1929)
+========================================================================
+
+ANNUAL BUDGET TOTALS (from Commercial and Financial Chronicle, 1925):
+
+  Year     | Budget Total
+  ---------|------------------
+  1916     | $212,956,155
+  1917     | (not specified)
+  1918     | $238,123,759  (last Mitchell Administration budget)
+  1919     | (not specified)
+  1920     | (not specified)
+  1921     | $345,540,039  (also listed as $345,530,039.77 in Britannica)
+  1922     | (not specified, figures unavailable due to budget format change)
+  1923     | (not specified)
+  1924     | $375,968,000
+  1925     | $399,618,885
+  1926     | $440,902,577  (preliminary)
+
+PAYROLL GROWTH:
+  1918 payroll: $104,567,373
+  1926 payroll: $215,400,000
+
+ANNUAL BUDGET INCREASES:
+  1921: +$71,850,554
+  1924: +$22,617,025
+  1925: +$23,650,885
+  1926: +~$41,000,000
+
+SOURCE: Commercial and Financial Chronicle, Oct 24, 1925
+  https://fraser.stlouisfed.org/title/commercial-financial-chronicle-1339/october-24-1925-518335/fulltext
+
+CAPITAL/CONSTRUCTION EXPENDITURES (NBER data, in thousands):
+  Year | Total ($000s) | Per Capita | Population
+  1919 | $29,774       | $5.35      | 5,567,000
+  1920 | $39,208       | $6.98      | 5,621,000
+  1921 | $71,467       | $12.51     | 5,714,000
+  1922 | $56,635       | $9.76      | 5,808,000
+  1923 | $75,769       | $12.89     | 5,874,000
+  1924 | $120,944      | $20.45     | 5,913,000
+  1925 | $132,871      | $22.64     | 5,869,000
+  Peak in 1928; decline began after 1931.
+
+SOURCE: NBER, "Construction Expenditures of New York City"
+  https://www.nber.org/system/files/chapters/c5616/c5616.pdf
+  Also: https://www.nber.org/system/files/chapters/c5508/c5508.pdf
+
+MAYORS:
+  John F. Hylan: 1918-1925
+  James J. Walker: 1926-1932 (resigned)
+
+
+========================================================================
+ERA 3: GREAT DEPRESSION (1929-1939)
+========================================================================
+
+FISCAL CRISIS CONTEXT:
+- NYC raised taxes 1930-1932 as revenue fell
+- By 1932: half the city's factories closed; ~1/3 unemployed;
+  1.6 million residents on relief
+- Mayor's Committee (Oct 1930 - June 1932): raised $3,124,345,
+  spent $2,930,566 on direct relief
+- $8 million in public works wages spent; State Legislature
+  appropriated $10 million more; Board of Aldermen approved
+  $2 million in revenue bonds
+- State income tax increased 50% by August 1931
+- The regular city budget was "in the neighborhood of $600,000,000
+  yearly" during the LaGuardia era (1937 analysis)
+
+BANKER AGREEMENT (1933):
+- Mayor O'Brien secured agreement with private banks to continue
+  lending to city until 1937 in exchange for freezing real estate
+  tax rates
+- Earlier, a syndicate loaned the city $100,000,000 for 3 years at 6%
+
+SOURCE: Marxists.org archive of James Burnham analysis (1937)
+  https://www.marxists.org/history/etol/writers/burnham/1937/08/laguardia.htm
+  New York Almanack: https://www.newyorkalmanack.com/2023/09/great-depression-in-new-york-city/
+
+LaGUARDIA BUDGET DATA (from Wikipedia - Mayoralty of Fiorello La Guardia):
+
+  Fiscal Year  | Budget
+  -------------|------------------
+  1934         | Inherited $31 million deficit; reduced by $19 million
+  1935         | $550,961,960.06
+  1936         | $545,541,842
+  1937         | $554,998,917.10
+  1938         | $587,980,567
+  1939         | $578,509,839
+
+KEY ACTIONS:
+- LaGuardia cut own salary in half
+- Eliminated 1,000+ positions
+- Consolidated five borough park departments into one
+- Secured enabling legislation from Albany for special taxes
+- Balanced budget by 1934, enabling federal funding applications
+- NYC was single greatest beneficiary of WPA in entire U.S.
+
+SOURCE: Wikipedia, "Mayoralty of Fiorello La Guardia"
+  https://en.wikipedia.org/wiki/Mayoralty_of_Fiorello_La_Guardia
+
+MAYORS:
+  James J. Walker: resigned Sept 1, 1932
+  John P. O'Brien: Jan 1 - Dec 31, 1933
+  Fiorello H. La Guardia: Jan 1, 1934 - Dec 31, 1945
+
+
+========================================================================
+ERA 4: WWII (1940-1945)
+========================================================================
+
+LaGUARDIA WARTIME BUDGETS:
+
+  Fiscal Year    | Budget
+  ---------------|------------------
+  1940-1941      | $581,048,834.10
+  1941-1942      | $573,740,594.13
+  1942-1943      | $656,314,369
+  1943-1944      | $753,071,123.40
+  1944-1945      | $737,400,923
+  1945           | $759,266,401.82
+
+NOTES:
+- Budget grew ~31% from FY1941-42 to FY1943-44
+- Roosevelt refused to provide fresh money for city; by 1944
+  city was short of funds for LaGuardia's programs
+- LaGuardia did not run for 4th term in 1945
+
+SOURCE: Wikipedia, "Mayoralty of Fiorello La Guardia"
+  https://en.wikipedia.org/wiki/Mayoralty_of_Fiorello_La_Guardia
+
+
+========================================================================
+ERA 5: POSTWAR EXPANSION (1946-1960)
+========================================================================
+
+O'DWYER ERA (1946-1950):
+- Presided over NYC's first billion-dollar budget (late 1940s,
+  exact year not confirmed but likely FY1948-49 or FY1949-50)
+- Raised subway fare from 5 cents to 10 cents
+- Allocated $22.5 million for parks (1946-1949)
+- Public assistance recipients: ~300,000 at end of WWII
+
+IMPELLITTERI ERA (1950-1953):
+- Raised bus and subway fare to 15 cents
+- Established parking meters for revenue
+- Increased sales tax
+- Fiscal pressures from postwar inflation
+
+WAGNER ERA (1954-1965):
+- Budget data points:
+  * "Last pre-Wagner budget" (FY1953-54): implied ~$1.24 billion
+    (derived from: Wagner's ~$3.09B budget was "nearly 2.5 times
+    as big as the last pre-Wagner budget a decade ago")
+  * By 1959: budget exceeded $2 billion
+  * ~1963-64: $3,093,461,582 (biggest municipal budget in U.S.)
+  * 1965 (Wagner's final budget): $3.87 billion
+    (including $256 million in borrowing)
+
+- Wagner sought $157 million in new revenue from Albany in 1959;
+  State approved only $125 million
+- Pay raises: planned $32 million, cut to $18.5 million
+- Each of Wagner's 10 annual budgets exceeded the previous
+- His final budget was 55% bigger than 5 years earlier
+- 1957-1962: executive orders granting collective bargaining
+  to city employee unions
+- Third term (1962-65): spending up 30% (inflation-adjusted 33%)
+- Last budget increase: ~$500 million (~15%), 5x inflation rate
+
+WELFARE GROWTH:
+  End of WWII: ~300,000 recipients of public assistance
+  1965: over 500,000 recipients (2/3 increase; population flat)
+
+SPENDING TREND:
+  1930-1965: real per capita city spending increased ~350%
+
+POPULATION:
+  1940 Census: 7,454,995
+  1950 Census: 7,891,957
+  1960 Census: 7,781,984
+
+SOURCES:
+  Wikipedia (William O'Dwyer): https://en.wikipedia.org/wiki/William_O'Dwyer
+  Wikipedia (Vincent Impellitteri): https://en.wikipedia.org/wiki/Vincent_R._Impellitteri
+  Harvard Crimson, "The Bulging Budget" (1959):
+    https://www.thecrimson.com/article/1959/4/11/the-bulging-budget-pnew-york-city-the/
+  City Journal, "The Fading Lessons of New York's Fiscal Crisis":
+    https://www.city-journal.org/article/new-york-fiscal-crisis-1970s-migrants-welfare-costs
+  TIME Magazine, "Cities: Everything's Up, Up, Up to Date":
+    https://time.com/archive/6626368/cities-everythings-up-up-up-to-date/
+  FEE, "The New York City Guide to Destroying an Economy":
+    https://fee.org/articles/the-new-york-city-guide-to-destroying-an-economy/
+
+
+========================================================================
+SUMMARY TABLE: NYC BUDGET TRAJECTORY 1899-1965
+========================================================================
+
+  Year/FY      | Approximate Budget     | Mayor
+  -------------|------------------------|-------------------
+  1899         | ~$68.5 million         | Van Wyck
+  1910         | $163 million           | Gaynor
+  1916         | $213 million           | Mitchel
+  1918         | $238 million           | Mitchel/Hylan
+  1921         | $346 million           | Hylan
+  1924         | $376 million           | Hylan
+  1925         | $400 million           | Hylan/Walker
+  1926         | $441 million           | Walker
+  1935         | $551 million           | LaGuardia
+  1936         | $546 million           | LaGuardia
+  1937         | $555 million           | LaGuardia
+  1938         | $588 million           | LaGuardia
+  1939         | $579 million           | LaGuardia
+  FY1940-41    | $581 million           | LaGuardia
+  FY1941-42    | $574 million           | LaGuardia
+  FY1942-43    | $656 million           | LaGuardia
+  FY1943-44    | $753 million           | LaGuardia
+  FY1944-45    | $737 million           | LaGuardia
+  1945         | $759 million           | LaGuardia
+  ~FY1948-50   | ~$1 billion (first)    | O'Dwyer
+  ~FY1953-54   | ~$1.24 billion (est.)  | Impellitteri/Wagner
+  ~1959        | >$2 billion            | Wagner
+  ~1963-64     | $3.09 billion          | Wagner
+  1965         | $3.87 billion          | Wagner
+
+
+========================================================================
+DEBT DATA
+========================================================================
+
+  Date           | Gross Debt        | Net Debt          | Sinking Fund
+  Jan 1, 1900    | $358.1 million    | $252.7 million    | $105.4 million
+  1920           | $1,238.3 million  | $1,033.9 million  | $204.4 million
+  1920 floating  | $42.4 million     |                   |
+
+
+========================================================================
+KEY PRIMARY SOURCES FOR FURTHER RESEARCH
+========================================================================
+
+1. FRASER - Financial Statistics of Cities (Census Bureau, 1902-1940):
+   Annual data on individual city revenues, expenditures, debt by function
+   https://fraser.stlouisfed.org/title/financial-statistics-cities-164?browse=1900s
+   Available years: 1905, 1906, 1907, 1908, 1909, 1910, 1911, 1912,
+   1913, 1914, 1915, 1916, 1917, 1918, 1919, 1920, 1921, 1922, 1923,
+   1924, 1925, 1926, 1927, 1928, 1929, 1930, 1931, 1932, 1933, 1934,
+   1935, 1936, 1937, 1938
+   ** THIS IS THE SINGLE BEST SOURCE for year-by-year NYC data with
+   departmental breakdowns (police, fire, education, health, streets,
+   charities, etc.) **
+
+2. Internet Archive - NYC Dept of Finance (1910-1914 data):
+   https://archive.org/details/cityofnewyorksum00newyuoft
+
+3. HathiTrust - Annual Reports of NYC Comptroller:
+   Digitized volumes for 1901, 1902, 1904, 1905, 1906, 1907, 1909, 1910+
+   https://catalog.hathitrust.org/Record/011227103
+   Also: 1909 "Comparative Tables" of budget appropriations since
+   consolidation (1898-1909)
+
+4. Census of Governments (1902, 1913, 1922, 1932, 1942, 1957):
+   https://www.census.gov/programs-surveys/gov-finances/data/historical-data.html
+
+5. NBER Working Paper 34011 by Pawel Janas:
+   Municipal financial transactions for 700+ US cities, 1924-1943
+
+6. NYC IBO Fiscal History (1985+):
+   https://www.ibo.nyc.ny.us/fiscalhistory.html
+
+7. LaGuardia & Wagner Archives at LaGuardia Community College:
+   https://www.laguardiawagnerarchive.lagcc.cuny.edu/
+
+8. NYC Municipal Archives:
+   https://a860-collectionguides.nyc.gov/
+
+
+========================================================================
+NOTES ON DATA GAPS
+========================================================================
+
+- No year-by-year budget totals found online for: 1899-1909, 1911-1915,
+  1917, 1919-1920, 1922-1923, 1927-1934, 1946-1958
+- The FRASER "Financial Statistics of Cities" series (source #1 above)
+  almost certainly contains this data for 1905-1938 but the PDFs could
+  not be accessed during this research session
+- The 1946-1960 gap is the hardest to fill; the Census Bureau's
+  "City Government Finances" series (successor to Financial Statistics
+  of Cities) covers 1942+ but is not easily accessible online
+- Revenue vs. expenditure breakdowns and departmental data (education,
+  police, fire, welfare, health, debt service) were not found in
+  web-accessible sources but exist in the FRASER/Census publications
