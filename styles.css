@@ -46,9 +46,9 @@
   --rev-borrowing: #8f5a5a;
 
   /* Chart helpers */
-  --revenue-total: #5a7a6b;
-  --expenditure-total: #8f5a5a;
-  --surplus: #5a8f6b;
+  --revenue-total: #4a6f8a;
+  --expenditure-total: #b87d5a;
+  --surplus: #4a7a6b;
   --deficit: #b85a5a;
 
   /* Spacing */
@@ -489,32 +489,6 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-}
-
-/* Compact inline legend for timeline doughnuts */
-.timeline-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.6rem;
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.68rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-.tl-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  white-space: nowrap;
-}
-
-.tl-legend-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 1px;
-  flex-shrink: 0;
 }
 
 .timeline-totals {

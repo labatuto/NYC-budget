@@ -296,23 +296,29 @@
     const isArea = mode === 'area';
     const isBar = mode === 'bar';
 
+    // Blue/amber pair: colorblind-safe, with dash pattern differentiation
+    const revColor = '#4a6f8a';  // steel blue
+    const expColor = '#b87d5a';  // warm amber
     const datasets = [
       {
         label: 'Revenue',
         data: revData,
-        borderColor: '#5a7a6b',
-        backgroundColor: isArea ? alpha('#5a7a6b', 0.15) : alpha('#5a7a6b', 0.7),
+        borderColor: revColor,
+        backgroundColor: isArea ? alpha(revColor, 0.18) : alpha(revColor, 0.7),
         fill: isArea,
         type: isBar ? 'bar' : 'line',
+        borderWidth: 2.5,
         order: 1
       },
       {
         label: 'Expenditure',
         data: expData,
-        borderColor: '#8f5a5a',
-        backgroundColor: isArea ? alpha('#8f5a5a', 0.15) : alpha('#8f5a5a', 0.7),
+        borderColor: expColor,
+        backgroundColor: isArea ? alpha(expColor, 0.12) : alpha(expColor, 0.7),
         fill: isArea,
         type: isBar ? 'bar' : 'line',
+        borderWidth: 2.5,
+        borderDash: isBar ? [] : [6, 3],
         order: 2
       }
     ];
@@ -404,10 +410,19 @@
     const isStacked = mode === 'stacked-area' || mode === 'stacked-bar' || isPct;
     const isBar = mode === 'stacked-bar';
 
-    const cats = Object.keys(EXP_COLORS);
     const labels = YEARS;
 
-    const datasets = cats.map(cat => {
+    // Sort categories by average value — largest at bottom of stack (first in array)
+    const cats = Object.keys(EXP_COLORS);
+    const catAvgs = cats.map(cat => {
+      const avg = labels.reduce((s, y) => s + (D.years[y]?.expenditures?.[cat] || 0), 0) / labels.length;
+      return { cat, avg };
+    });
+    catAvgs.sort((a, b) => b.avg - a.avg);
+    const sortedCats = catAvgs.map(d => d.cat);
+
+    const LINE_DASHES = [[], [8, 4], [3, 3], [12, 4, 3, 4], [6, 2], [2, 6]];
+    const datasets = sortedCats.map((cat, idx) => {
       const rawData = labels.map(y => {
         const v = adj(D.years[y]?.expenditures?.[cat] || 0, y);
         return v;
@@ -419,6 +434,7 @@
           return total > 0 ? (rawData[i] / total) * 100 : 0;
         });
       }
+      const isMultiLine = mode === 'line-multi';
       return {
         label: EXP_LABELS[cat],
         data,
@@ -426,10 +442,11 @@
         backgroundColor: isStacked || isBar ? alpha(EXP_COLORS[cat], 0.75) : alpha(EXP_COLORS[cat], 0.1),
         fill: isStacked && !isBar,
         borderWidth: isBar ? 0 : (isStacked ? 1 : 2),
+        borderDash: isMultiLine ? (LINE_DASHES[idx % LINE_DASHES.length]) : [],
         stack: isStacked ? 'stack' : undefined,
         type: isBar ? 'bar' : 'line',
         pointRadius: 0,
-        order: cats.indexOf(cat)
+        order: idx
       };
     });
 
@@ -487,7 +504,7 @@
       }
     });
 
-    renderLegend('expenditure-legend', cats, EXP_LABELS, EXP_COLORS, 'expenditures');
+    renderLegend('expenditure-legend', sortedCats, EXP_LABELS, EXP_COLORS, 'expenditures');
   }
 
   // ---- Revenue Chart ----
@@ -498,10 +515,19 @@
     const isStacked = mode === 'stacked-area' || mode === 'stacked-bar' || isPct;
     const isBar = mode === 'stacked-bar';
 
-    const cats = Object.keys(REV_COLORS);
     const labels = YEARS;
 
-    const datasets = cats.map(cat => {
+    // Sort categories by average value — largest at bottom of stack
+    const cats = Object.keys(REV_COLORS);
+    const catAvgs = cats.map(cat => {
+      const avg = labels.reduce((s, y) => s + (D.years[y]?.revenue?.[cat] || 0), 0) / labels.length;
+      return { cat, avg };
+    });
+    catAvgs.sort((a, b) => b.avg - a.avg);
+    const sortedCats = catAvgs.map(d => d.cat);
+
+    const LINE_DASHES = [[], [8, 4], [3, 3], [12, 4, 3, 4], [6, 2], [2, 6]];
+    const datasets = sortedCats.map((cat, idx) => {
       const rawData = labels.map(y => adj(D.years[y]?.revenue?.[cat] || 0, y));
       let data = rawData;
       if (isPct) {
@@ -510,6 +536,7 @@
           return total > 0 ? (rawData[i] / total) * 100 : 0;
         });
       }
+      const isMultiLine = mode === 'line-multi';
       return {
         label: REV_LABELS[cat],
         data,
@@ -517,9 +544,11 @@
         backgroundColor: isStacked || isBar ? alpha(REV_COLORS[cat], 0.75) : alpha(REV_COLORS[cat], 0.1),
         fill: isStacked && !isBar,
         borderWidth: isBar ? 0 : (isStacked ? 1 : 2),
+        borderDash: isMultiLine ? (LINE_DASHES[idx % LINE_DASHES.length]) : [],
         stack: isStacked ? 'stack' : undefined,
         type: isBar ? 'bar' : 'line',
-        pointRadius: 0
+        pointRadius: 0,
+        order: idx
       };
     });
 
@@ -577,7 +606,7 @@
       }
     });
 
-    renderLegend('revenue-legend', cats, REV_LABELS, REV_COLORS, 'revenue');
+    renderLegend('revenue-legend', sortedCats, REV_LABELS, REV_COLORS, 'revenue');
   }
 
   // ---- Legend ----
@@ -632,23 +661,33 @@
     const expCats = Object.keys(EXP_LABELS);
     const revCats = Object.keys(REV_LABELS);
 
-    if (mode === 'side-by-side' || mode === 'overlay') {
-      // Side-by-side bar charts
-      const expLabels = expCats.map(c => EXP_LABELS[c]);
-      const revLabels = revCats.map(c => REV_LABELS[c]);
+    // Helper: sort categories by Year B value descending (largest at top)
+    function sortedIndices(cats, dataObj, yr) {
+      return cats.map((c, i) => ({ i, val: adj(dataObj[c] || 0, yr) }))
+        .sort((a, b) => b.val - a.val)
+        .map(d => d.i);
+    }
 
-      const expDataA = expCats.map(c => adj(dataA.expenditures[c] || 0, yearA));
-      const expDataB = expCats.map(c => adj(dataB.expenditures[c] || 0, yearB));
-      const revDataA = revCats.map(c => adj(dataA.revenue[c] || 0, yearA));
-      const revDataB = revCats.map(c => adj(dataB.revenue[c] || 0, yearB));
+    if (mode === 'side-by-side' || mode === 'overlay') {
+      // Sort by Year B values (the comparison target)
+      const expOrder = sortedIndices(expCats, dataB.expenditures, yearB);
+      const revOrder = sortedIndices(revCats, dataB.revenue, yearB);
+
+      const expLabelsSorted = expOrder.map(i => EXP_LABELS[expCats[i]]);
+      const revLabelsSorted = revOrder.map(i => REV_LABELS[revCats[i]]);
+
+      const expDataA = expOrder.map(i => adj(dataA.expenditures[expCats[i]] || 0, yearA));
+      const expDataB = expOrder.map(i => adj(dataB.expenditures[expCats[i]] || 0, yearB));
+      const revDataA = revOrder.map(i => adj(dataA.revenue[revCats[i]] || 0, yearA));
+      const revDataB = revOrder.map(i => adj(dataB.revenue[revCats[i]] || 0, yearB));
 
       charts.compareExp = new Chart(document.getElementById('compare-exp-chart').getContext('2d'), {
         type: 'bar',
         data: {
-          labels: expLabels,
+          labels: expLabelsSorted,
           datasets: [
-            { label: String(yearA), data: expDataA, backgroundColor: alpha('#5a7a8f', 0.7), borderRadius: 3 },
-            { label: String(yearB), data: expDataB, backgroundColor: alpha('#8f5a5a', 0.7), borderRadius: 3 }
+            { label: String(yearA), data: expDataA, backgroundColor: alpha('#4a6f8a', 0.7), borderRadius: 3 },
+            { label: String(yearB), data: expDataB, backgroundColor: alpha('#b87d5a', 0.7), borderRadius: 3 }
           ]
         },
         options: compareBarOptions('Expenditures')
@@ -657,37 +696,38 @@
       charts.compareRev = new Chart(document.getElementById('compare-rev-chart').getContext('2d'), {
         type: 'bar',
         data: {
-          labels: revLabels,
+          labels: revLabelsSorted,
           datasets: [
-            { label: String(yearA), data: revDataA, backgroundColor: alpha('#5a7a8f', 0.7), borderRadius: 3 },
-            { label: String(yearB), data: revDataB, backgroundColor: alpha('#8f5a5a', 0.7), borderRadius: 3 }
+            { label: String(yearA), data: revDataA, backgroundColor: alpha('#4a6f8a', 0.7), borderRadius: 3 },
+            { label: String(yearB), data: revDataB, backgroundColor: alpha('#b87d5a', 0.7), borderRadius: 3 }
           ]
         },
         options: compareBarOptions('Revenue')
       });
     } else {
-      // Delta mode — show percentage change
-      const expDeltas = expCats.map(c => {
+      // Delta mode — sort by absolute magnitude of change
+      const expDeltaPairs = expCats.map(c => {
         const a = adj(dataA.expenditures[c] || 0, yearA);
         const b = adj(dataB.expenditures[c] || 0, yearB);
-        return pctChange(a, b);
-      });
-      const revDeltas = revCats.map(c => {
+        return { cat: c, delta: pctChange(a, b) ?? 0 };
+      }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+
+      const revDeltaPairs = revCats.map(c => {
         const a = adj(dataA.revenue[c] || 0, yearA);
         const b = adj(dataB.revenue[c] || 0, yearB);
-        return pctChange(a, b);
-      });
+        return { cat: c, delta: pctChange(a, b) ?? 0 };
+      }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
-      const deltaColors = vals => vals.map(v => v != null && v >= 0 ? alpha('#8f5a5a', 0.7) : alpha('#5a7a6b', 0.7));
+      const deltaColor = v => v >= 0 ? alpha('#b87d5a', 0.7) : alpha('#4a6f8a', 0.7);
 
       charts.compareExp = new Chart(document.getElementById('compare-exp-chart').getContext('2d'), {
         type: 'bar',
         data: {
-          labels: expCats.map(c => EXP_LABELS[c]),
+          labels: expDeltaPairs.map(d => EXP_LABELS[d.cat]),
           datasets: [{
             label: '% Change',
-            data: expDeltas.map(d => d ?? 0),
-            backgroundColor: deltaColors(expDeltas),
+            data: expDeltaPairs.map(d => d.delta),
+            backgroundColor: expDeltaPairs.map(d => deltaColor(d.delta)),
             borderRadius: 3
           }]
         },
@@ -697,11 +737,11 @@
       charts.compareRev = new Chart(document.getElementById('compare-rev-chart').getContext('2d'), {
         type: 'bar',
         data: {
-          labels: revCats.map(c => REV_LABELS[c]),
+          labels: revDeltaPairs.map(d => REV_LABELS[d.cat]),
           datasets: [{
             label: '% Change',
-            data: revDeltas.map(d => d ?? 0),
-            backgroundColor: deltaColors(revDeltas),
+            data: revDeltaPairs.map(d => d.delta),
+            backgroundColor: revDeltaPairs.map(d => deltaColor(d.delta)),
             borderRadius: 3
           }]
         },
@@ -778,7 +818,7 @@
           formatter: v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%',
           font: { size: 9, family: "'JetBrains Mono', monospace", weight: 600 },
           color: function(ctx) {
-            return ctx.dataset.data[ctx.dataIndex] >= 0 ? '#8f5a5a' : '#5a7a6b';
+            return ctx.dataset.data[ctx.dataIndex] >= 0 ? '#b87d5a' : '#4a6f8a';
           },
           padding: { left: 4, right: 4 }
         },
@@ -868,135 +908,128 @@
     const data = D.years[year];
     if (!data) return;
 
-    // Expenditure donut
+    // Expenditure horizontal bars — sorted by value
     if (charts.timelineExp) charts.timelineExp.destroy();
     const expCats = Object.keys(EXP_LABELS);
     const expVals = expCats.map(c => adj(data.expenditures[c] || 0, year));
-    const expNonZero = expCats.filter((c, i) => expVals[i] > 0.5);
-    const expValsFiltered = expNonZero.map(c => adj(data.expenditures[c] || 0, year));
+    // Build sorted pairs, filter near-zero, sort descending
+    const expPairs = expCats.map((c, i) => ({ cat: c, val: expVals[i] }))
+      .filter(d => d.val > 0.5)
+      .sort((a, b) => b.val - a.val);
+    const expTotal = expPairs.reduce((s, d) => s + d.val, 0);
 
-    const expTotal = expValsFiltered.reduce((a, b) => a + b, 0);
     charts.timelineExp = new Chart(document.getElementById('timeline-exp-chart').getContext('2d'), {
-      type: 'doughnut',
+      type: 'bar',
       data: {
-        labels: expNonZero.map(c => EXP_LABELS[c]),
+        labels: expPairs.map(d => EXP_LABELS[d.cat]),
         datasets: [{
-          data: expValsFiltered,
-          backgroundColor: expNonZero.map(c => EXP_COLORS[c]),
-          borderWidth: 2,
-          borderColor: '#fff'
+          data: expPairs.map(d => d.val),
+          backgroundColor: expPairs.map(d => alpha(EXP_COLORS[d.cat], 0.8)),
+          borderColor: expPairs.map(d => EXP_COLORS[d.cat]),
+          borderWidth: 1,
+          borderRadius: 2,
+          borderSkipped: false
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '42%',
-        layout: { padding: 2 },
+        indexAxis: 'y',
+        layout: { padding: { right: 55 } },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: '#eeece8', drawTicks: false },
+            ticks: { callback: v => fmt(v), font: { size: 9 } },
+            title: { display: true, text: 'Expenditures' + (expTotal > 0 ? '  ·  Total: ' + fmt(expTotal) : ''), font: { size: 11, weight: 600 }, color: '#8f5a5a' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 9 } }
+          }
+        },
         plugins: {
           legend: { display: false },
-          doughnutCenter: {
-            text: fmt(expTotal),
-            subtext: 'Expenditures',
-            color: '#8f5a5a'
-          },
           datalabels: {
-            display: function(ctx) {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              return total > 0 && ctx.dataset.data[ctx.dataIndex] / total > 0.08;
+            display: true,
+            anchor: 'end',
+            align: 'right',
+            formatter: function(value) {
+              const pct = expTotal > 0 ? (value / expTotal * 100).toFixed(0) : '0';
+              return fmt(value) + '  ' + pct + '%';
             },
-            formatter: function(value, ctx) {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              return (value / total * 100).toFixed(0) + '%';
-            },
-            color: '#fff',
-            font: { size: 9, weight: 700, family: "'JetBrains Mono', monospace" },
-            anchor: 'center',
-            align: 'center',
-            textShadowColor: 'rgba(0,0,0,0.3)',
-            textShadowBlur: 3
+            font: { size: 8, family: "'JetBrains Mono', monospace", weight: 500 },
+            color: '#6b6b6f'
           },
           tooltip: {
             callbacks: {
               label: item => `${item.label}: ${fmt(item.raw)} (${(expTotal > 0 ? (item.raw / expTotal * 100).toFixed(1) : 0)}%)`
             }
-          },
-          title: {
-            display: false
           }
         }
       }
     });
 
-    // Revenue donut
+    // Revenue horizontal bars — sorted by value
     if (charts.timelineRev) charts.timelineRev.destroy();
     const revCats = Object.keys(REV_LABELS);
     const revVals = revCats.map(c => adj(data.revenue[c] || 0, year));
-    const revNonZero = revCats.filter((c, i) => revVals[i] > 0.5);
-    const revValsFiltered = revNonZero.map(c => adj(data.revenue[c] || 0, year));
+    const revPairs = revCats.map((c, i) => ({ cat: c, val: revVals[i] }))
+      .filter(d => d.val > 0.5)
+      .sort((a, b) => b.val - a.val);
+    const revTotal = revPairs.reduce((s, d) => s + d.val, 0);
 
-    const revTotal = revValsFiltered.reduce((a, b) => a + b, 0);
     charts.timelineRev = new Chart(document.getElementById('timeline-rev-chart').getContext('2d'), {
-      type: 'doughnut',
+      type: 'bar',
       data: {
-        labels: revNonZero.map(c => REV_LABELS[c]),
+        labels: revPairs.map(d => REV_LABELS[d.cat]),
         datasets: [{
-          data: revValsFiltered,
-          backgroundColor: revNonZero.map(c => REV_COLORS[c]),
-          borderWidth: 2,
-          borderColor: '#fff'
+          data: revPairs.map(d => d.val),
+          backgroundColor: revPairs.map(d => alpha(REV_COLORS[d.cat], 0.8)),
+          borderColor: revPairs.map(d => REV_COLORS[d.cat]),
+          borderWidth: 1,
+          borderRadius: 2,
+          borderSkipped: false
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '42%',
-        layout: { padding: 2 },
+        indexAxis: 'y',
+        layout: { padding: { right: 55 } },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: '#eeece8', drawTicks: false },
+            ticks: { callback: v => fmt(v), font: { size: 9 } },
+            title: { display: true, text: 'Revenue' + (revTotal > 0 ? '  ·  Total: ' + fmt(revTotal) : ''), font: { size: 11, weight: 600 }, color: '#5a7a6b' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 9 } }
+          }
+        },
         plugins: {
           legend: { display: false },
-          doughnutCenter: {
-            text: fmt(revTotal),
-            subtext: 'Revenue',
-            color: '#5a7a6b'
-          },
           datalabels: {
-            display: function(ctx) {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              return total > 0 && ctx.dataset.data[ctx.dataIndex] / total > 0.08;
+            display: true,
+            anchor: 'end',
+            align: 'right',
+            formatter: function(value) {
+              const pct = revTotal > 0 ? (value / revTotal * 100).toFixed(0) : '0';
+              return fmt(value) + '  ' + pct + '%';
             },
-            formatter: function(value, ctx) {
-              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-              return (value / total * 100).toFixed(0) + '%';
-            },
-            color: '#fff',
-            font: { size: 9, weight: 700, family: "'JetBrains Mono', monospace" },
-            anchor: 'center',
-            align: 'center',
-            textShadowColor: 'rgba(0,0,0,0.3)',
-            textShadowBlur: 3
+            font: { size: 8, family: "'JetBrains Mono', monospace", weight: 500 },
+            color: '#6b6b6f'
           },
           tooltip: {
             callbacks: {
               label: item => `${item.label}: ${fmt(item.raw)} (${(revTotal > 0 ? (item.raw / revTotal * 100).toFixed(1) : 0)}%)`
             }
-          },
-          title: {
-            display: false
           }
         }
       }
     });
-
-    // Compact inline legends for doughnuts — sorted by value, largest first
-    function renderTimelineLegend(containerId, cats, labels, colors, vals) {
-      const el = document.getElementById(containerId);
-      const indexed = cats.map((c, i) => ({ cat: c, val: vals[i] })).filter(d => d.val > 0.5);
-      indexed.sort((a, b) => b.val - a.val);
-      el.innerHTML = indexed.map(d =>
-        `<span class="tl-legend-item"><span class="tl-legend-dot" style="background:${colors[d.cat]}"></span>${labels[d.cat]}</span>`
-      ).join('');
-    }
-    renderTimelineLegend('timeline-exp-legend', expCats, EXP_LABELS, EXP_COLORS, expVals);
-    renderTimelineLegend('timeline-rev-legend', revCats, REV_LABELS, REV_COLORS, revVals);
 
     // Totals
     const totalExp = adj(getExpTotal(year), year);
