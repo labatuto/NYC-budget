@@ -148,8 +148,95 @@
   Chart.defaults.elements.point.hoverRadius = 4;
   Chart.defaults.elements.line.tension = 0.3;
   Chart.defaults.elements.line.borderWidth = 2;
-  Chart.defaults.scales.linear.grid = { color: '#eeece8' };
+  Chart.defaults.scales.linear.grid = { color: '#eeece8', drawTicks: false };
   Chart.defaults.scales.category.grid = { display: false };
+  Chart.defaults.scales.linear.ticks = { ...Chart.defaults.scales.linear.ticks, padding: 8 };
+  Chart.defaults.scales.category.ticks = { ...Chart.defaults.scales.category.ticks, padding: 4 };
+
+  // Register datalabels plugin — disabled by default, enabled per-chart
+  Chart.register(ChartDataLabels);
+  Chart.defaults.plugins.datalabels = { display: false };
+
+  // Custom plugin: subtle vertical reference lines at annotation years
+  const annotationLinesPlugin = {
+    id: 'annotationLines',
+    afterDraw(chart) {
+      const opts = chart.options.plugins?.annotationLines;
+      if (!opts?.years) return;
+      const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+      ctx.save();
+      opts.years.forEach(year => {
+        const yearStr = String(year);
+        const idx = chart.data.labels.indexOf(yearStr);
+        if (idx === -1) return;
+        const xPos = x.getPixelForValue(idx);
+        if (xPos < left || xPos > right) return;
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(44,44,46,0.10)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        ctx.moveTo(xPos, top);
+        ctx.lineTo(xPos, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Small tick at bottom
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(44,44,46,0.25)';
+        ctx.arc(xPos, bottom, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+  };
+  Chart.register(annotationLinesPlugin);
+
+  // Custom plugin: direct text labels at the end of each line dataset
+  const endpointLabelPlugin = {
+    id: 'endpointLabels',
+    afterDatasetsDraw(chart) {
+      if (!chart.options.plugins?.endpointLabels?.display) return;
+      const { ctx, chartArea: { right } } = chart;
+      ctx.save();
+      chart.data.datasets.forEach((ds, i) => {
+        const meta = chart.getDatasetMeta(i);
+        if (meta.hidden || meta.type === 'bar') return;
+        const points = meta.data;
+        const lastPt = points[points.length - 1];
+        if (!lastPt) return;
+        const val = ds.data[ds.data.length - 1];
+        ctx.font = "600 10px 'JetBrains Mono', monospace";
+        ctx.fillStyle = ds.borderColor || '#2c2c2e';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${ds.label}  ${fmt(val)}`, lastPt.x + 8, lastPt.y);
+      });
+      ctx.restore();
+    }
+  };
+  Chart.register(endpointLabelPlugin);
+
+  // Custom plugin: center text inside doughnut charts
+  const doughnutCenterPlugin = {
+    id: 'doughnutCenter',
+    afterDraw(chart) {
+      const opts = chart.options.plugins?.doughnutCenter;
+      if (!opts?.text) return;
+      const { ctx, chartArea: { top, bottom, left, right } } = chart;
+      const centerX = (left + right) / 2;
+      const centerY = (top + bottom) / 2;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = "700 15px 'JetBrains Mono', monospace";
+      ctx.fillStyle = opts.color || '#2c2c2e';
+      ctx.fillText(opts.text, centerX, centerY - 7);
+      ctx.font = "500 9px 'Inter', sans-serif";
+      ctx.fillStyle = '#9a9a9e';
+      ctx.fillText(opts.subtext || '', centerX, centerY + 9);
+      ctx.restore();
+    }
+  };
+  Chart.register(doughnutCenterPlugin);
 
   // ---- Mayor Bar ----
   function renderMayorBar() {
@@ -158,6 +245,9 @@
     const totalYears = MAX_YEAR - MIN_YEAR + 1;
     const partyColors = { D: '#5a7a8f', R: '#8f6b6b', 'R/I': '#7a6b8f', 'R/Liberal': '#6b8f8a', 'R (Fusion)': '#8f8a6b' };
 
+    // Segment row
+    const segRow = document.createElement('div');
+    segRow.className = 'mayor-segments-row';
     D.mayors.forEach(m => {
       const s = Math.max(m.start, MIN_YEAR);
       const e = Math.min(m.end, MAX_YEAR);
@@ -168,10 +258,30 @@
       seg.className = 'mayor-segment';
       seg.style.width = pct + '%';
       seg.style.background = partyColors[m.party] || '#8f8a7a';
-      seg.title = `${m.name} (${m.start}–${m.end})`;
-      if (pct > 3) seg.textContent = m.name.split(' ').pop();
-      bar.appendChild(seg);
+      seg.title = `${m.name} (${m.party}, ${m.start}–${m.end})`;
+      // Show last name for wide segments, initial for narrow
+      const lastName = m.name.split(' ').pop();
+      if (pct > 6) {
+        seg.textContent = lastName;
+      } else if (pct > 2.5) {
+        seg.textContent = lastName.charAt(0);
+      }
+      segRow.appendChild(seg);
     });
+    bar.appendChild(segRow);
+
+    // Year ticks row — decade markers anchoring the bar to the timeline
+    const tickRow = document.createElement('div');
+    tickRow.className = 'mayor-ticks-row';
+    for (let y = Math.ceil(MIN_YEAR / 10) * 10; y <= MAX_YEAR; y += 10) {
+      const pct = ((y - MIN_YEAR) / totalYears) * 100;
+      const tick = document.createElement('span');
+      tick.className = 'mayor-tick';
+      tick.style.left = pct + '%';
+      tick.textContent = y;
+      tickRow.appendChild(tick);
+    }
+    bar.appendChild(tickRow);
   }
 
   // ---- Overview Chart ----
@@ -214,6 +324,7 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { right: isBar ? 0 : 120 } },
         interaction: { mode: 'index', intersect: false },
         scales: {
           x: {
@@ -238,14 +349,32 @@
           }
         },
         plugins: {
+          endpointLabels: { display: !isBar },
+          annotationLines: { years: Object.keys(D.annotations).map(Number) },
           tooltip: {
             callbacks: {
               title: items => 'FY ' + items[0].label,
               afterTitle: items => {
-                const m = getMayor(parseInt(items[0].label));
+                const yr = parseInt(items[0].label);
+                const m = getMayor(yr);
                 return m ? `Mayor: ${m.name}` : '';
               },
-              label: item => `${item.dataset.label}: ${fmt(item.raw)}`
+              label: item => `  ${item.dataset.label}: ${fmt(item.raw)}`,
+              afterBody: items => {
+                const rev = items.find(i => i.dataset.label === 'Revenue');
+                const exp = items.find(i => i.dataset.label === 'Expenditure');
+                if (rev && exp) {
+                  const diff = rev.raw - exp.raw;
+                  const tag = diff >= 0 ? 'Surplus' : 'Deficit';
+                  return `  ${tag}: ${fmt(Math.abs(diff))}`;
+                }
+                return '';
+              },
+              footer: items => {
+                const yr = parseInt(items[0].label);
+                const note = D.annotations[yr];
+                return note ? '\n' + note : '';
+              }
             }
           }
         }
@@ -262,7 +391,7 @@
     Object.entries(D.annotations).forEach(([yr, text]) => {
       const chip = document.createElement('span');
       chip.className = 'annotation-chip';
-      chip.innerHTML = `<span class="dot"></span>${yr}: ${text}`;
+      chip.innerHTML = `<span class="dot"></span><strong>${yr}</strong> ${text}`;
       container.appendChild(chip);
     });
   }
@@ -337,10 +466,20 @@
         plugins: {
           tooltip: {
             callbacks: {
-              title: items => 'FY ' + items[0].label,
+              title: items => {
+                const yr = items[0].label;
+                const m = getMayor(parseInt(yr));
+                return 'FY ' + yr + (m ? '  ·  ' + m.name : '');
+              },
               label: item => {
                 const v = item.raw;
-                return `${item.dataset.label}: ${isPct ? v.toFixed(1) + '%' : fmt(v)}`;
+                return `  ${item.dataset.label}: ${isPct ? v.toFixed(1) + '%' : fmt(v)}`;
+              },
+              afterBody: function(items) {
+                if (isPct || items.length === 0) return '';
+                const yr = parseInt(items[0].label);
+                const total = adj(getExpTotal(yr), yr);
+                return `\n  Total: ${fmt(total)}`;
               }
             }
           }
@@ -417,10 +556,20 @@
         plugins: {
           tooltip: {
             callbacks: {
-              title: items => 'FY ' + items[0].label,
+              title: items => {
+                const yr = items[0].label;
+                const m = getMayor(parseInt(yr));
+                return 'FY ' + yr + (m ? '  ·  ' + m.name : '');
+              },
               label: item => {
                 const v = item.raw;
-                return `${item.dataset.label}: ${isPct ? v.toFixed(1) + '%' : fmt(v)}`;
+                return `  ${item.dataset.label}: ${isPct ? v.toFixed(1) + '%' : fmt(v)}`;
+              },
+              afterBody: function(items) {
+                if (isPct || items.length === 0) return '';
+                const yr = parseInt(items[0].label);
+                const total = adj(getRevTotal(yr), yr);
+                return `\n  Total: ${fmt(total)}`;
               }
             }
           }
@@ -569,18 +718,30 @@
       responsive: true,
       maintainAspectRatio: false,
       indexAxis: 'y',
+      layout: { padding: { right: 60 } },
       scales: {
         x: {
           beginAtZero: true,
           ticks: { callback: v => fmt(v) },
+          grid: { color: '#eeece8', drawTicks: false },
           title: { display: true, text: inflationAdjust ? '2024 dollars (millions)' : 'Nominal dollars (millions)', font: { size: 10 } }
         },
         y: {
-          ticks: { font: { size: 10 } }
+          ticks: { font: { size: 10 } },
+          grid: { display: false }
         }
       },
       plugins: {
-        legend: { display: true, position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } },
+        legend: { display: true, position: 'top', labels: { font: { size: 11 }, boxWidth: 12, padding: 16 } },
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: 'right',
+          formatter: v => fmt(v),
+          font: { size: 9, family: "'JetBrains Mono', monospace", weight: 500 },
+          color: '#6b6b6f',
+          padding: { left: 4 }
+        },
         tooltip: {
           callbacks: {
             label: item => `${item.dataset.label}: ${fmt(item.raw)}`
@@ -595,16 +756,32 @@
       responsive: true,
       maintainAspectRatio: false,
       indexAxis: 'y',
+      layout: { padding: { right: 50, left: 50 } },
       scales: {
         x: {
-          ticks: { callback: v => v.toFixed(0) + '%' }
+          ticks: { callback: v => v.toFixed(0) + '%' },
+          grid: { color: '#eeece8', drawTicks: false }
         },
         y: {
-          ticks: { font: { size: 10 } }
+          ticks: { font: { size: 10 } },
+          grid: { display: false }
         }
       },
       plugins: {
         legend: { display: false },
+        datalabels: {
+          display: true,
+          anchor: 'end',
+          align: function(ctx) {
+            return ctx.dataset.data[ctx.dataIndex] >= 0 ? 'right' : 'left';
+          },
+          formatter: v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%',
+          font: { size: 9, family: "'JetBrains Mono', monospace", weight: 600 },
+          color: function(ctx) {
+            return ctx.dataset.data[ctx.dataIndex] >= 0 ? '#8f5a5a' : '#5a7a6b';
+          },
+          padding: { left: 4, right: 4 }
+        },
         tooltip: {
           callbacks: {
             label: item => (item.raw >= 0 ? '+' : '') + item.raw.toFixed(1) + '%'
@@ -698,6 +875,7 @@
     const expNonZero = expCats.filter((c, i) => expVals[i] > 0.5);
     const expValsFiltered = expNonZero.map(c => adj(data.expenditures[c] || 0, year));
 
+    const expTotal = expValsFiltered.reduce((a, b) => a + b, 0);
     charts.timelineExp = new Chart(document.getElementById('timeline-exp-chart').getContext('2d'), {
       type: 'doughnut',
       data: {
@@ -705,26 +883,45 @@
         datasets: [{
           data: expValsFiltered,
           backgroundColor: expNonZero.map(c => EXP_COLORS[c]),
-          borderWidth: 1,
+          borderWidth: 2,
           borderColor: '#fff'
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '45%',
+        cutout: '42%',
+        layout: { padding: 2 },
         plugins: {
           legend: { display: false },
+          doughnutCenter: {
+            text: fmt(expTotal),
+            subtext: 'Expenditures',
+            color: '#8f5a5a'
+          },
+          datalabels: {
+            display: function(ctx) {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              return total > 0 && ctx.dataset.data[ctx.dataIndex] / total > 0.08;
+            },
+            formatter: function(value, ctx) {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              return (value / total * 100).toFixed(0) + '%';
+            },
+            color: '#fff',
+            font: { size: 9, weight: 700, family: "'JetBrains Mono', monospace" },
+            anchor: 'center',
+            align: 'center',
+            textShadowColor: 'rgba(0,0,0,0.3)',
+            textShadowBlur: 3
+          },
           tooltip: {
             callbacks: {
-              label: item => `${item.label}: ${fmt(item.raw)} (${((item.raw / expValsFiltered.reduce((a, b) => a + b, 0)) * 100).toFixed(1)}%)`
+              label: item => `${item.label}: ${fmt(item.raw)} (${(expTotal > 0 ? (item.raw / expTotal * 100).toFixed(1) : 0)}%)`
             }
           },
           title: {
-            display: true,
-            text: 'Expenditures',
-            font: { size: 13, weight: 600 },
-            color: '#2c2c2e'
+            display: false
           }
         }
       }
@@ -737,6 +934,7 @@
     const revNonZero = revCats.filter((c, i) => revVals[i] > 0.5);
     const revValsFiltered = revNonZero.map(c => adj(data.revenue[c] || 0, year));
 
+    const revTotal = revValsFiltered.reduce((a, b) => a + b, 0);
     charts.timelineRev = new Chart(document.getElementById('timeline-rev-chart').getContext('2d'), {
       type: 'doughnut',
       data: {
@@ -744,30 +942,61 @@
         datasets: [{
           data: revValsFiltered,
           backgroundColor: revNonZero.map(c => REV_COLORS[c]),
-          borderWidth: 1,
+          borderWidth: 2,
           borderColor: '#fff'
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '45%',
+        cutout: '42%',
+        layout: { padding: 2 },
         plugins: {
           legend: { display: false },
+          doughnutCenter: {
+            text: fmt(revTotal),
+            subtext: 'Revenue',
+            color: '#5a7a6b'
+          },
+          datalabels: {
+            display: function(ctx) {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              return total > 0 && ctx.dataset.data[ctx.dataIndex] / total > 0.08;
+            },
+            formatter: function(value, ctx) {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              return (value / total * 100).toFixed(0) + '%';
+            },
+            color: '#fff',
+            font: { size: 9, weight: 700, family: "'JetBrains Mono', monospace" },
+            anchor: 'center',
+            align: 'center',
+            textShadowColor: 'rgba(0,0,0,0.3)',
+            textShadowBlur: 3
+          },
           tooltip: {
             callbacks: {
-              label: item => `${item.label}: ${fmt(item.raw)} (${((item.raw / revValsFiltered.reduce((a, b) => a + b, 0)) * 100).toFixed(1)}%)`
+              label: item => `${item.label}: ${fmt(item.raw)} (${(revTotal > 0 ? (item.raw / revTotal * 100).toFixed(1) : 0)}%)`
             }
           },
           title: {
-            display: true,
-            text: 'Revenue',
-            font: { size: 13, weight: 600 },
-            color: '#2c2c2e'
+            display: false
           }
         }
       }
     });
+
+    // Compact inline legends for doughnuts — sorted by value, largest first
+    function renderTimelineLegend(containerId, cats, labels, colors, vals) {
+      const el = document.getElementById(containerId);
+      const indexed = cats.map((c, i) => ({ cat: c, val: vals[i] })).filter(d => d.val > 0.5);
+      indexed.sort((a, b) => b.val - a.val);
+      el.innerHTML = indexed.map(d =>
+        `<span class="tl-legend-item"><span class="tl-legend-dot" style="background:${colors[d.cat]}"></span>${labels[d.cat]}</span>`
+      ).join('');
+    }
+    renderTimelineLegend('timeline-exp-legend', expCats, EXP_LABELS, EXP_COLORS, expVals);
+    renderTimelineLegend('timeline-rev-legend', revCats, REV_LABELS, REV_COLORS, revVals);
 
     // Totals
     const totalExp = adj(getExpTotal(year), year);
