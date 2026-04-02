@@ -259,12 +259,15 @@
       seg.style.width = pct + '%';
       seg.style.background = partyColors[m.party] || '#8f8a7a';
       seg.title = `${m.name} (${m.party}, ${m.start}–${m.end})`;
-      // Show last name for wide segments, initial for narrow
-      const lastName = m.name.split(' ').pop();
-      if (pct > 6) {
-        seg.textContent = lastName;
-      } else if (pct > 2.5) {
-        seg.textContent = lastName.charAt(0);
+      // Extract surname, skipping suffixes like "Jr."
+      const parts = m.name.split(' ');
+      const surname = parts.find((p, i) => i > 0 && !p.match(/^(Jr|Sr|II|III)\.?$/)) || parts[1] || parts[0];
+      if (pct > 8) {
+        seg.textContent = surname;
+      } else if (pct > 4) {
+        seg.textContent = surname.substring(0, 3);
+      } else {
+        seg.textContent = surname.charAt(0);
       }
       segRow.appendChild(seg);
     });
