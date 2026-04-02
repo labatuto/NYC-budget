@@ -215,7 +215,71 @@
   };
   Chart.register(endpointLabelPlugin);
 
-  // Custom plugin: center text inside doughnut charts
+  // Custom plugin: subtle mayor tenure bands behind chart data
+  const mayorBandsPlugin = {
+    id: 'mayorBands',
+    beforeDraw(chart) {
+      const opts = chart.options.plugins?.mayorBands;
+      if (!opts?.enabled) return;
+      const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+      const labels = chart.data.labels;
+      if (!labels || labels.length === 0) return;
+      const firstYear = parseInt(labels[0]);
+      const lastYear = parseInt(labels[labels.length - 1]);
+
+      const partyFills = {
+        D:            'rgba(61,104,137,0.045)',
+        R:            'rgba(140,70,60,0.045)',
+        'R/I':        'rgba(110,90,60,0.045)',
+        'R/Liberal':  'rgba(90,110,80,0.045)',
+        'R (Fusion)': 'rgba(110,100,50,0.045)'
+      };
+
+      ctx.save();
+      D.mayors.forEach((m, i) => {
+        const s = Math.max(m.start, firstYear);
+        const e = Math.min(m.end, lastYear);
+        if (e < s) return;
+
+        const sIdx = labels.indexOf(String(s));
+        const eIdx = labels.indexOf(String(e));
+        if (sIdx === -1 || eIdx === -1) return;
+
+        const xStart = x.getPixelForValue(sIdx);
+        const xEnd = x.getPixelForValue(eIdx);
+        const bandWidth = xEnd - xStart;
+
+        // Subtle party-colored band
+        ctx.fillStyle = partyFills[m.party] || 'rgba(100,100,100,0.03)';
+        ctx.fillRect(xStart, top, bandWidth, bottom - top);
+
+        // Thin separator line between mayors
+        if (sIdx > 0) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(xStart, top);
+          ctx.lineTo(xStart, bottom);
+          ctx.stroke();
+        }
+
+        // Mayor name at top of chart — skip if too narrow
+        if (bandWidth > 36) {
+          const parts = m.name.split(' ');
+          const surname = parts.find((p, idx) => idx > 0 && !p.match(/^(Jr|Sr|II|III)\.?$/)) || parts[1] || parts[0];
+          const label = bandWidth > 70 ? surname : surname.charAt(0) + '.';
+
+          ctx.font = "500 8px 'Inter', sans-serif";
+          ctx.fillStyle = 'rgba(30,42,54,0.30)';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(label, xStart + bandWidth / 2, top + 4);
+        }
+      });
+      ctx.restore();
+    }
+  };
+  Chart.register(mayorBandsPlugin);
   const doughnutCenterPlugin = {
     id: 'doughnutCenter',
     afterDraw(chart) {
@@ -237,55 +301,6 @@
     }
   };
   Chart.register(doughnutCenterPlugin);
-
-  // ---- Mayor Bar ----
-  function renderMayorBar() {
-    const bar = document.getElementById('mayor-bar');
-    bar.innerHTML = '';
-    const totalYears = MAX_YEAR - MIN_YEAR + 1;
-    const partyColors = { D: '#5a7a8f', R: '#8f6b6b', 'R/I': '#7a6b8f', 'R/Liberal': '#6b8f8a', 'R (Fusion)': '#8f8a6b' };
-
-    // Segment row
-    const segRow = document.createElement('div');
-    segRow.className = 'mayor-segments-row';
-    D.mayors.forEach(m => {
-      const s = Math.max(m.start, MIN_YEAR);
-      const e = Math.min(m.end, MAX_YEAR);
-      if (e < s) return;
-      const span = e - s + 1;
-      const pct = (span / totalYears) * 100;
-      const seg = document.createElement('div');
-      seg.className = 'mayor-segment';
-      seg.style.width = pct + '%';
-      seg.style.background = partyColors[m.party] || '#8f8a7a';
-      seg.title = `${m.name} (${m.party}, ${m.start}–${m.end})`;
-      // Extract surname, skipping suffixes like "Jr."
-      const parts = m.name.split(' ');
-      const surname = parts.find((p, i) => i > 0 && !p.match(/^(Jr|Sr|II|III)\.?$/)) || parts[1] || parts[0];
-      if (pct > 8) {
-        seg.textContent = surname;
-      } else if (pct > 4) {
-        seg.textContent = surname.substring(0, 3);
-      } else {
-        seg.textContent = surname.charAt(0);
-      }
-      segRow.appendChild(seg);
-    });
-    bar.appendChild(segRow);
-
-    // Year ticks row — decade markers anchoring the bar to the timeline
-    const tickRow = document.createElement('div');
-    tickRow.className = 'mayor-ticks-row';
-    for (let y = Math.ceil(MIN_YEAR / 10) * 10; y <= MAX_YEAR; y += 10) {
-      const pct = ((y - MIN_YEAR) / totalYears) * 100;
-      const tick = document.createElement('span');
-      tick.className = 'mayor-tick';
-      tick.style.left = pct + '%';
-      tick.textContent = y;
-      tickRow.appendChild(tick);
-    }
-    bar.appendChild(tickRow);
-  }
 
   // ---- Overview Chart ----
   function renderOverview() {
@@ -359,6 +374,7 @@
         },
         plugins: {
           endpointLabels: { display: !isBar },
+          mayorBands: { enabled: true },
           annotationLines: { years: Object.keys(D.annotations).map(Number) },
           tooltip: {
             callbacks: {
@@ -1221,7 +1237,6 @@
 
   // ---- Init ----
   function init() {
-    renderMayorBar();
     initCompare();
     initTimeline();
     initTable();
