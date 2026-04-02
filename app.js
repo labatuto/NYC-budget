@@ -10,34 +10,34 @@
   const MIN_YEAR = YEARS[0];
   const MAX_YEAR = YEARS[YEARS.length - 1];
 
-  // ---- Color palettes ----
+  // ---- Color palettes ---- (wider hue separation for stacked legibility)
   const EXP_COLORS = {
-    education:   '#7b8f6b',
-    police:      '#6b7a8f',
-    fire:        '#b87d5a',
-    welfare:     '#8f6b7a',
-    health:      '#6b8f8a',
-    debtService: '#9a8b6b',
-    pension:     '#7a6b8f',
-    sanitation:  '#6b8f6b',
-    higherEd:    '#5a7a8f',
-    corrections: '#8f7a6b',
-    housing:     '#8f6b6b',
-    parks:       '#6b9a6b',
-    transport:   '#6b6b8f',
-    other:       '#8f8a7a'
+    education:   '#4d7a3e',
+    police:      '#3d6889',
+    fire:        '#c06830',
+    welfare:     '#8a3d66',
+    health:      '#1d867a',
+    debtService: '#8a7a30',
+    pension:     '#6a3d8a',
+    sanitation:  '#3d8a50',
+    higherEd:    '#2d5a8a',
+    corrections: '#8a6a30',
+    housing:     '#8a3d3d',
+    parks:       '#2d8a3d',
+    transport:   '#4d4d8a',
+    other:       '#78786a'
   };
 
   const REV_COLORS = {
-    propertyTax:  '#5a7a8f',
-    incomeTax:    '#6b8f7a',
-    salesTax:     '#7a6b8f',
-    businessTax:  '#8f7a5a',
-    stateAid:     '#5a8f6b',
-    federalAid:   '#6b5a8f',
-    otherTax:     '#8f8a6b',
-    fees:         '#6b8f8f',
-    other:        '#8f5a5a'
+    propertyTax:  '#1d5a8a',
+    incomeTax:    '#2d8a50',
+    salesTax:     '#7a2d8a',
+    businessTax:  '#8a7a1d',
+    stateAid:     '#1d8a6a',
+    federalAid:   '#5a1d8a',
+    otherTax:     '#7a8a2d',
+    fees:         '#1d788a',
+    other:        '#8a2d2d'
   };
 
   const EXP_LABELS = {
@@ -215,7 +215,71 @@
   };
   Chart.register(endpointLabelPlugin);
 
-  // Custom plugin: center text inside doughnut charts
+  // Custom plugin: subtle mayor tenure bands behind chart data
+  const mayorBandsPlugin = {
+    id: 'mayorBands',
+    beforeDraw(chart) {
+      const opts = chart.options.plugins?.mayorBands;
+      if (!opts?.enabled) return;
+      const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
+      const labels = chart.data.labels;
+      if (!labels || labels.length === 0) return;
+      const firstYear = parseInt(labels[0]);
+      const lastYear = parseInt(labels[labels.length - 1]);
+
+      const partyFills = {
+        D:            'rgba(61,104,137,0.045)',
+        R:            'rgba(140,70,60,0.045)',
+        'R/I':        'rgba(110,90,60,0.045)',
+        'R/Liberal':  'rgba(90,110,80,0.045)',
+        'R (Fusion)': 'rgba(110,100,50,0.045)'
+      };
+
+      ctx.save();
+      D.mayors.forEach((m, i) => {
+        const s = Math.max(m.start, firstYear);
+        const e = Math.min(m.end, lastYear);
+        if (e < s) return;
+
+        const sIdx = labels.indexOf(String(s));
+        const eIdx = labels.indexOf(String(e));
+        if (sIdx === -1 || eIdx === -1) return;
+
+        const xStart = x.getPixelForValue(sIdx);
+        const xEnd = x.getPixelForValue(eIdx);
+        const bandWidth = xEnd - xStart;
+
+        // Subtle party-colored band
+        ctx.fillStyle = partyFills[m.party] || 'rgba(100,100,100,0.03)';
+        ctx.fillRect(xStart, top, bandWidth, bottom - top);
+
+        // Thin separator line between mayors
+        if (sIdx > 0) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(xStart, top);
+          ctx.lineTo(xStart, bottom);
+          ctx.stroke();
+        }
+
+        // Mayor name at top of chart — skip if too narrow
+        if (bandWidth > 36) {
+          const parts = m.name.split(' ');
+          const surname = parts.find((p, idx) => idx > 0 && !p.match(/^(Jr|Sr|II|III)\.?$/)) || parts[1] || parts[0];
+          const label = bandWidth > 70 ? surname : surname.charAt(0) + '.';
+
+          ctx.font = "500 8px 'Inter', sans-serif";
+          ctx.fillStyle = 'rgba(30,42,54,0.30)';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(label, xStart + bandWidth / 2, top + 4);
+        }
+      });
+      ctx.restore();
+    }
+  };
+  Chart.register(mayorBandsPlugin);
   const doughnutCenterPlugin = {
     id: 'doughnutCenter',
     afterDraw(chart) {
@@ -237,52 +301,6 @@
     }
   };
   Chart.register(doughnutCenterPlugin);
-
-  // ---- Mayor Bar ----
-  function renderMayorBar() {
-    const bar = document.getElementById('mayor-bar');
-    bar.innerHTML = '';
-    const totalYears = MAX_YEAR - MIN_YEAR + 1;
-    const partyColors = { D: '#5a7a8f', R: '#8f6b6b', 'R/I': '#7a6b8f', 'R/Liberal': '#6b8f8a', 'R (Fusion)': '#8f8a6b' };
-
-    // Segment row
-    const segRow = document.createElement('div');
-    segRow.className = 'mayor-segments-row';
-    D.mayors.forEach(m => {
-      const s = Math.max(m.start, MIN_YEAR);
-      const e = Math.min(m.end, MAX_YEAR);
-      if (e < s) return;
-      const span = e - s + 1;
-      const pct = (span / totalYears) * 100;
-      const seg = document.createElement('div');
-      seg.className = 'mayor-segment';
-      seg.style.width = pct + '%';
-      seg.style.background = partyColors[m.party] || '#8f8a7a';
-      seg.title = `${m.name} (${m.party}, ${m.start}–${m.end})`;
-      // Show last name for wide segments, initial for narrow
-      const lastName = m.name.split(' ').pop();
-      if (pct > 6) {
-        seg.textContent = lastName;
-      } else if (pct > 2.5) {
-        seg.textContent = lastName.charAt(0);
-      }
-      segRow.appendChild(seg);
-    });
-    bar.appendChild(segRow);
-
-    // Year ticks row — decade markers anchoring the bar to the timeline
-    const tickRow = document.createElement('div');
-    tickRow.className = 'mayor-ticks-row';
-    for (let y = Math.ceil(MIN_YEAR / 10) * 10; y <= MAX_YEAR; y += 10) {
-      const pct = ((y - MIN_YEAR) / totalYears) * 100;
-      const tick = document.createElement('span');
-      tick.className = 'mayor-tick';
-      tick.style.left = pct + '%';
-      tick.textContent = y;
-      tickRow.appendChild(tick);
-    }
-    bar.appendChild(tickRow);
-  }
 
   // ---- Overview Chart ----
   function renderOverview() {
@@ -356,6 +374,7 @@
         },
         plugins: {
           endpointLabels: { display: !isBar },
+          mayorBands: { enabled: true },
           annotationLines: { years: Object.keys(D.annotations).map(Number) },
           tooltip: {
             callbacks: {
@@ -394,12 +413,26 @@
   function renderAnnotations() {
     const container = document.getElementById('overview-annotations');
     container.innerHTML = '';
+    container.classList.remove('expanded');
+
+    const inner = document.createElement('div');
+    inner.className = 'annotation-inner';
     Object.entries(D.annotations).forEach(([yr, text]) => {
       const chip = document.createElement('span');
       chip.className = 'annotation-chip';
       chip.innerHTML = `<span class="dot"></span><strong>${yr}</strong> ${text}`;
-      container.appendChild(chip);
+      inner.appendChild(chip);
     });
+    container.appendChild(inner);
+
+    const toggle = document.createElement('button');
+    toggle.className = 'annotation-toggle';
+    toggle.textContent = 'Show all annotations';
+    toggle.addEventListener('click', () => {
+      const isExpanded = container.classList.toggle('expanded');
+      toggle.textContent = isExpanded ? 'Show fewer' : 'Show all annotations';
+    });
+    container.appendChild(toggle);
   }
 
   // ---- Expenditure Chart ----
@@ -848,12 +881,29 @@
     const expDir = expPct >= 0 ? 'up' : 'down';
     const revDir = revPct >= 0 ? 'up' : 'down';
 
+    const fmtPct = (v) => v != null ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : '—';
     container.innerHTML = `
-      <strong>${yearA}</strong> (${mayorA ? mayorA.name : '—'}) vs. <strong>${yearB}</strong> (${mayorB ? mayorB.name : '—'})${suffix}<br>
-      Total expenditures: <span class="stat">${fmt(totalExpA)}</span> → <span class="stat">${fmt(totalExpB)}</span>
-      (<span class="stat ${expDir}">${expPct >= 0 ? '+' : ''}${expPct?.toFixed(1) ?? '—'}%</span>)<br>
-      Total revenue: <span class="stat">${fmt(totalRevA)}</span> → <span class="stat">${fmt(totalRevB)}</span>
-      (<span class="stat ${revDir}">${revPct >= 0 ? '+' : ''}${revPct?.toFixed(1) ?? '—'}%</span>)
+      <div style="margin-bottom:0.75rem;font-weight:600;color:var(--text)">
+        <span class="stat">${yearA}</span> ${mayorA ? mayorA.name : ''} &nbsp;vs.&nbsp;
+        <span class="stat">${yearB}</span> ${mayorB ? mayorB.name : ''}
+        <span style="font-weight:400;color:var(--text-muted);font-size:0.78rem">${suffix}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem 1.5rem">
+        <div>
+          <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:600;margin-bottom:0.2rem">Expenditures</div>
+          <span class="stat">${fmt(totalExpA)}</span>
+          <span style="color:var(--text-muted);margin:0 0.2rem">&rarr;</span>
+          <span class="stat">${fmt(totalExpB)}</span>
+          <span class="stat ${expDir}" style="margin-left:0.4rem">${fmtPct(expPct)}</span>
+        </div>
+        <div>
+          <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);font-weight:600;margin-bottom:0.2rem">Revenue</div>
+          <span class="stat">${fmt(totalRevA)}</span>
+          <span style="color:var(--text-muted);margin:0 0.2rem">&rarr;</span>
+          <span class="stat">${fmt(totalRevB)}</span>
+          <span class="stat ${revDir}" style="margin-left:0.4rem">${fmtPct(revPct)}</span>
+        </div>
+      </div>
     `;
   }
 
@@ -941,7 +991,7 @@
             beginAtZero: true,
             grid: { color: '#eeece8', drawTicks: false },
             ticks: { callback: v => fmt(v), font: { size: 9 } },
-            title: { display: true, text: 'Expenditures' + (expTotal > 0 ? '  ·  Total: ' + fmt(expTotal) : ''), font: { size: 11, weight: 600 }, color: '#8f5a5a' }
+            title: { display: true, text: 'Expenditures' + (expTotal > 0 ? '  ·  Total: ' + fmt(expTotal) : ''), font: { size: 11, weight: 600 }, color: '#b87d5a' }
           },
           y: {
             grid: { display: false },
@@ -1002,7 +1052,7 @@
             beginAtZero: true,
             grid: { color: '#eeece8', drawTicks: false },
             ticks: { callback: v => fmt(v), font: { size: 9 } },
-            title: { display: true, text: 'Revenue' + (revTotal > 0 ? '  ·  Total: ' + fmt(revTotal) : ''), font: { size: 11, weight: 600 }, color: '#5a7a6b' }
+            title: { display: true, text: 'Revenue' + (revTotal > 0 ? '  ·  Total: ' + fmt(revTotal) : ''), font: { size: 11, weight: 600 }, color: '#4a6f8a' }
           },
           y: {
             grid: { display: false },
@@ -1187,7 +1237,6 @@
 
   // ---- Init ----
   function init() {
-    renderMayorBar();
     initCompare();
     initTimeline();
     initTable();
